@@ -18,4 +18,4 @@ networks:
   external:
     driver: bridge
     internal: false
-    name: go-academy
+    name: gomiinfo-network
