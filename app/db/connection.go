@@ -1,20 +1,20 @@
 package db
 
 import (
-	"database/sql"
 	"fmt"
 	"os"
 
-	_ "github.com/go-sql-driver/mysql"
+	"github.com/jinzhu/gorm"
+	_ "github.com/jinzhu/gorm/dialects/mysql"
 )
 
-func Init() (*sql.DB, error) {
-	dsn := fmt.Sprintf("root:%s@tcp(localhost:3306)/%s",
+func Init() (*gorm.DB, error) {
+	dsn := fmt.Sprintf("root:%s@tcp(localhost:3306)/%s?charset=utf8mb4&parseTime=True&loc=Local",
 		os.Getenv("MYSQL_ROOT_PASSWORD"),
 		os.Getenv("MYSQL_DATABASE"),
 	)
 
-	db, err := sql.Open("mysql", dsn)
+	db, err := gorm.Open("mysql", dsn)
 
 	if err != nil {
 		return nil, err
