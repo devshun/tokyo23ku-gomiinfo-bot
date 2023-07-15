@@ -3,17 +3,27 @@ package main
 import (
 	"fmt"
 
-	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
+	"github.com/devshun/tokyo23ku-gomiinfo-bot.git/db"
 )
 
-func handleRequest() (events.APIGatewayProxyResponse, error) {
+func updateGarbageDays() error {
 
-	fmt.Println("start HandleRequest")
+	fmt.Println("ゴミ情報の更新を開始します")
 
-	return events.APIGatewayProxyResponse{}, nil
+	db, err := db.Init()
+
+	if err != nil {
+		return err
+	}
+
+	defer db.Close()
+
+	fmt.Println("ゴミ情報の更新を終了します")
+
+	return nil
 }
 
 func main() {
-	lambda.Start(handleRequest)
+	lambda.Start(updateGarbageDays)
 }

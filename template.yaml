@@ -28,6 +28,24 @@ Resources:
             Method: GET
       Environment: # More info about Env Vars: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#environment-object
         Variables:
+          MYSQL_ROOT_PASSWORD: !Ref MYSQL_ROOT_PASSWORD
+          MYSQL_DATABASE: !Ref MYSQL_DATABASE
+  UpdateGarbageDaysFunction:
+    Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
+    Properties:
+      CodeUri: app/batch/update_garbage_days/
+      Handler: update_garbage_days
+      Runtime: go1.x
+      # Role: arn:aws:iam::880843126767:role/go-academy-lambda
+      Architectures:
+        - x86_64
+      Events:
+        ScheduleEvent:
+          Type: Schedule
+          Properties:
+            Schedule: rate(1 minute)
+      Environment: # More info about Env Vars: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#environment-object
+        Variables:
           PARAM1: VALUE
 
 Outputs:
