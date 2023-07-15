@@ -2,4 +2,4 @@
 .aws-sam
 
 # env
-.env
+.env.json
