@@ -46,8 +46,8 @@ Resources:
             Schedule: rate(1 minute)
       Environment: # More info about Env Vars: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#environment-object
         Variables:
-          PARAM1: VALUE
-
+          MYSQL_ROOT_PASSWORD: !Ref MYSQL_ROOT_PASSWORD
+          MYSQL_DATABASE: !Ref MYSQL_DATABASE
 Outputs:
   # ServerlessRestApi is an implicit API created out of Events key under Serverless::Function
   # Find out more about other implicit resources you can reference within SAM
