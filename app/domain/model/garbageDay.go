@@ -8,8 +8,6 @@ import (
 
 type Weekday int
 
-// [堤通一丁目 土曜日 火曜日 金曜日 第2月曜日 第4月曜日]
-
 const (
 	Sunday Weekday = iota
 	Monday

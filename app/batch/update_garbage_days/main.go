@@ -70,9 +70,7 @@ func updateGarbageDays() error {
 			}
 
 			db.FirstOrCreate(&garbageDay, model.GarbageDay{RegionID: region.ID, GarbageType: header[i], DayOfWeek: weekday})
-
 		}
-
 	}
 
 	fmt.Println("INFO: ゴミ情報の更新を終了します")
