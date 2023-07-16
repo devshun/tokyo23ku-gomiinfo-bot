@@ -13,7 +13,7 @@ migrate:
 migrate_down:
 	migrate -path ./infra/db/migrations -database "mysql://root:password@tcp(localhost:3306)/gomi-info-db" down
 # seed
-seed: 
+import_csv: 
 	sam local invoke UpdateGarbageDaysFunction --docker-network ${DOCKER_NETWORK_NAME}  --env-vars ${ENV_FILE_PATH}
 lint:
 	golangci-lint run ./app/...

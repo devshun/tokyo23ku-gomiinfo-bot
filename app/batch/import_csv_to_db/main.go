@@ -12,7 +12,7 @@ import (
 	"golang.org/x/text/transform"
 )
 
-func updateGarbageDays() error {
+func importCSVToDB() error {
 
 	fmt.Println("INFO: ゴミ情報の更新を開始します")
 
@@ -79,5 +79,5 @@ func updateGarbageDays() error {
 }
 
 func main() {
-	lambda.Start(updateGarbageDays)
+	lambda.Start(importCSVToDB)
 }
