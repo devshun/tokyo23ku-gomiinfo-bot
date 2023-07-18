@@ -30,11 +30,11 @@ Resources:
         Variables:
           MYSQL_ROOT_PASSWORD: !Ref MYSQL_ROOT_PASSWORD
           MYSQL_DATABASE: !Ref MYSQL_DATABASE
-  UpdateGarbageDaysFunction:
+  ImportCsvToDbFunction:
     Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
     Properties:
-      CodeUri: app/batch/update_garbage_days/
-      Handler: update_garbage_days
+      CodeUri: app/batch/import_csv_to_db/
+      Handler: import_csv_to_db
       Runtime: go1.x
       # Role: arn:aws:iam::880843126767:role/go-academy-lambda
       Architectures:

@@ -3,8 +3,6 @@ services:
   db:
     image: mysql:8.0
     command: --default-authentication-plugin=mysql_native_password
-    # volumes:
-    #   - ./data:/var/lib/mysql
     environment:
       MYSQL_ROOT_PASSWORD: password
       MYSQL_DATABASE: gomi-info-db
@@ -12,6 +10,26 @@ services:
       - 3306:3306
     networks:
       - external
+
+  migrate:
+    build:
+      context: .
+      dockerfile: Dockerfile.migrate
+    depends_on:
+      - db
+    command:
+      [
+        "-database",
+        "mysql://root:password@tcp(db:3306)/gomi-info-db",
+        "-path",
+        "/migrations",
+        "up",
+      ]
+    volumes:
+      - ./migrations:/migrations
+    networks:
+      - external
+
 networks:
   external:
     driver: bridge
