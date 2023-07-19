@@ -7,4 +7,5 @@ CREATE TABLE garbage_days (
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   FOREIGN KEY (region_id) REFERENCES regions(id)
+  CONSTRAINT garbage_days_unique UNIQUE (region_id, garbage_type, day_of_week, week_number_of_month)
 );
