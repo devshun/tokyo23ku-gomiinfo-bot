@@ -30,6 +30,24 @@ Resources:
         Variables:
           MYSQL_ROOT_PASSWORD: !Ref MYSQL_ROOT_PASSWORD
           MYSQL_DATABASE: !Ref MYSQL_DATABASE
+  GarbageDayInfoFunction:
+    Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
+    Properties:
+      CodeUri: app/handler/garbage-day-info/
+      Handler: garbage-day-info
+      Runtime: go1.x
+      Architectures:
+        - x86_64
+      Events:
+        CatchAll:
+          Type: Api # More info about API Event Source: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#api
+          Properties:
+            Path: /garbage-day-info
+            Method: GET
+      Environment: # More info about Env Vars: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#environment-object
+        Variables:
+          MYSQL_ROOT_PASSWORD: !Ref MYSQL_ROOT_PASSWORD
+          MYSQL_DATABASE: !Ref MYSQL_DATABASE
   ImportCsvToDbFunction:
     Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
     Properties:
