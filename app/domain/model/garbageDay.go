@@ -8,10 +8,21 @@ import (
 	"time"
 )
 
+type GarbageDay struct {
+	ID                int         `gorm:"primaryKey;autoIncrement"`
+	RegionID          int         `gorm:"not null"`
+	GarbageType       GarbageType `gorm:"not null"`
+	DayOfWeek         Weekday     `gorm:"not null"`
+	WeekNumberOfMonth int         `gorm:""`
+	CreatedAt         time.Time   `gorm:"autoCreateTime"`
+	UpdatedAt         time.Time   `gorm:"autoUpdateTime"`
+	Region            Region      `gorm:"foreignKey:RegionID"`
+}
+
 type Weekday int
 
 const (
-	Sunday Weekday = iota
+	Sunday Weekday = iota + 1
 	Monday
 	Tuesday
 	Wednesday
@@ -20,35 +31,24 @@ const (
 	Saturday
 )
 
-var weekdayNames = [...]string{
-	"日曜日",
-	"月曜日",
-	"火曜日",
-	"水曜日",
-	"木曜日",
-	"金曜日",
-	"土曜日",
-}
-
-type GarbageDay struct {
-	ID                int       `gorm:"primaryKey;autoIncrement"`
-	RegionID          int       `gorm:"not null"`
-	GarbageType       string    `gorm:"size:255;not null"`
-	DayOfWeek         Weekday   `gorm:""`
-	WeekNumberOfMonth int       `gorm:""`
-	CreatedAt         time.Time `gorm:"autoCreateTime"`
-	UpdatedAt         time.Time `gorm:"autoUpdateTime"`
-	Region            Region    `gorm:"foreignKey:RegionID"`
+var weekdayMap = map[Weekday]string{
+	Sunday:    "日曜日",
+	Monday:    "月曜日",
+	Tuesday:   "火曜日",
+	Wednesday: "水曜日",
+	Thursday:  "木曜日",
+	Friday:    "金曜日",
+	Saturday:  "土曜日",
 }
 
 func (w Weekday) String() string {
-	return weekdayNames[w]
+	return weekdayMap[w]
 }
 
 func FindWeekday(s string) (Weekday, int, error) {
-	for i, name := range weekdayNames {
+	for k, v := range weekdayMap {
 		// 曜日を取得
-		if strings.Contains(s, name) {
+		if strings.Contains(s, v) {
 			// 第何週目かを取得
 			re := regexp.MustCompile(`第(\d)`)
 
@@ -61,11 +61,29 @@ func FindWeekday(s string) (Weekday, int, error) {
 					return 0, 0, err
 				}
 
-				return Weekday(i), weekNum, nil
+				return Weekday(k), weekNum, nil
 			}
 
-			return Weekday(i), 0, nil
+			return Weekday(k), 0, nil
 		}
 	}
 	return 0, 0, fmt.Errorf("invalid: %s", s)
+}
+
+type GarbageType int
+
+const (
+	Burnable GarbageType = iota + 1
+	NonBurnable
+	Recyclable
+)
+
+var GarbageTypeMap = map[GarbageType]string{
+	Burnable:    "燃えるゴミ",
+	NonBurnable: "燃えないゴミ",
+	Recyclable:  "資源ゴミ",
+}
+
+func (g GarbageType) String() string {
+	return GarbageTypeMap[g]
 }
