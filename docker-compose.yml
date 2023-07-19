@@ -10,28 +10,8 @@ services:
       - 3306:3306
     networks:
       - external
-
-  migrate:
-    build:
-      context: .
-      dockerfile: Dockerfile.migrate
-    depends_on:
-      - db
-    command:
-      [
-        "-database",
-        "mysql://root:password@tcp(db:3306)/gomi-info-db",
-        "-path",
-        "/migrations",
-        "up",
-      ]
-    volumes:
-      - ./migrations:/migrations
-    networks:
-      - external
-
 networks:
   external:
     driver: bridge
     internal: false
-    name: gomiinfo-network
+    name: gomi-info-network
