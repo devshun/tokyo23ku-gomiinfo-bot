@@ -60,7 +60,7 @@ func importCSVToDB() error {
 
 		var region model.Region
 
-		db.FirstOrCreate(&region, model.Region{Name: record[0], WardID: ward.ID})
+		db.FirstOrCreate(&region, model.Region{Name: record[0], Ward: ward})
 
 		for i, v := range record[1:] {
 			var garbageDay model.GarbageDay
@@ -72,7 +72,7 @@ func importCSVToDB() error {
 			}
 
 			garbageType := func() model.GarbageType {
-				if header[i] == "燃やすゴミの収集曜日" {
+				if header[i] == "燃やすごみの収集曜日" {
 					return model.Burnable
 				}
 				if header[i] == "燃やさないごみの収集曜日" {
