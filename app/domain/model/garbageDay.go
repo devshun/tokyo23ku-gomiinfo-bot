@@ -9,14 +9,14 @@ import (
 )
 
 type GarbageDay struct {
-	ID                int         `gorm:"primaryKey;autoIncrement"`
-	RegionID          int         `gorm:"not null"`
-	GarbageType       GarbageType `gorm:"not null"`
-	DayOfWeek         Weekday     `gorm:"not null"`
-	WeekNumberOfMonth int         `gorm:""`
-	CreatedAt         time.Time   `gorm:"autoCreateTime"`
-	UpdatedAt         time.Time   `gorm:"autoUpdateTime"`
-	Region            Region      `gorm:"foreignKey:RegionID"`
+	ID                int         `gorm:"primaryKey;autoIncrement" json:"id,omitempty"`
+	RegionID          int         `gorm:"not null" json:"region_id,omitempty"`
+	GarbageType       GarbageType `gorm:"not null" json:"garbage_type,omitempty"`
+	DayOfWeek         Weekday     `gorm:"not null" json:"day_of_week,omitempty"`
+	WeekNumberOfMonth int         `gorm:"" json:"week_number_of_month,omitempty"`
+	CreatedAt         time.Time   `gorm:"autoCreateTime" json:"created_at,omitempty"`
+	UpdatedAt         time.Time   `gorm:"autoUpdateTime" json:"updated_at,omitempty"`
+	Region            Region      `gorm:"foreignKey:RegionID" json:"region,omitempty"`
 }
 
 type Weekday int
