@@ -63,13 +63,13 @@ func importCSVToDB() error {
 		for i, v := range record[1:] {
 			var garbageDay model.GarbageDay
 
-			weekday, err := model.FindWeekday(v)
+			weekday, weekNum, err := model.FindWeekday(v)
 
 			if err != nil {
 				panic(err)
 			}
 
-			db.FirstOrCreate(&garbageDay, model.GarbageDay{RegionID: region.ID, GarbageType: header[i], DayOfWeek: weekday})
+			db.FirstOrCreate(&garbageDay, model.GarbageDay{RegionID: region.ID, GarbageType: header[i], DayOfWeek: weekday, WeekNumberOfMonth: weekNum})
 		}
 	}
 

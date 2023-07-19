@@ -2,6 +2,8 @@ package model
 
 import (
 	"fmt"
+	"regexp"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -29,25 +31,41 @@ var weekdayNames = [...]string{
 }
 
 type GarbageDay struct {
-	ID          int       `gorm:"primaryKey;autoIncrement"`
-	RegionID    int       `gorm:"not null"`
-	GarbageType string    `gorm:"size:255;not null"`
-	DayOfWeek   Weekday   `gorm:""`
-	WeekOfMonth int       `gorm:""`
-	CreatedAt   time.Time `gorm:"autoCreateTime"`
-	UpdatedAt   time.Time `gorm:"autoUpdateTime"`
-	Region      Region    `gorm:"foreignKey:RegionID"`
+	ID                int       `gorm:"primaryKey;autoIncrement"`
+	RegionID          int       `gorm:"not null"`
+	GarbageType       string    `gorm:"size:255;not null"`
+	DayOfWeek         Weekday   `gorm:""`
+	WeekNumberOfMonth int       `gorm:""`
+	CreatedAt         time.Time `gorm:"autoCreateTime"`
+	UpdatedAt         time.Time `gorm:"autoUpdateTime"`
+	Region            Region    `gorm:"foreignKey:RegionID"`
 }
 
 func (w Weekday) String() string {
 	return weekdayNames[w]
 }
 
-func FindWeekday(s string) (Weekday, error) {
+func FindWeekday(s string) (Weekday, int, error) {
 	for i, name := range weekdayNames {
+		// 曜日を取得
 		if strings.Contains(s, name) {
-			return Weekday(i), nil
+			// 第何週目かを取得
+			re := regexp.MustCompile(`第(\d)`)
+
+			match := re.FindStringSubmatch(s)
+
+			if len(match) > 0 {
+				weekNum, err := strconv.Atoi(match[1])
+
+				if err != nil {
+					return 0, 0, err
+				}
+
+				return Weekday(i), weekNum, nil
+			}
+
+			return Weekday(i), 0, nil
 		}
 	}
-	return -1, fmt.Errorf("invalid: %s", s)
+	return 0, 0, fmt.Errorf("invalid: %s", s)
 }
