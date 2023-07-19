@@ -52,6 +52,8 @@ func importCSVToDB() error {
 	db.FirstOrCreate(&ward, model.Ward{Name: "墨田区"})
 
 	header := rows[0][1:]
+
+	fmt.Println(header)
 	records := rows[1:]
 
 	for _, record := range records {
@@ -69,7 +71,20 @@ func importCSVToDB() error {
 				panic(err)
 			}
 
-			db.FirstOrCreate(&garbageDay, model.GarbageDay{RegionID: region.ID, GarbageType: header[i], DayOfWeek: weekday, WeekNumberOfMonth: weekNum})
+			garbageType := func() model.GarbageType {
+				if header[i] == "燃やすゴミの収集曜日" {
+					return model.Burnable
+				}
+				if header[i] == "燃やさないごみの収集曜日" {
+					return model.NonBurnable
+				}
+				if header[i] == "資源物の収集曜日" {
+					return model.Recyclable
+				}
+				return 0
+			}()
+
+			db.FirstOrCreate(&garbageDay, model.GarbageDay{RegionID: region.ID, GarbageType: garbageType, DayOfWeek: weekday, WeekNumberOfMonth: weekNum})
 		}
 	}
 
