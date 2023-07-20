@@ -1,23 +1,8 @@
 package model
 
 import (
-	"fmt"
-	"regexp"
-	"strconv"
-	"strings"
 	"time"
 )
-
-type GarbageDay struct {
-	ID                int         `gorm:"primaryKey;autoIncrement" json:"id,omitempty"`
-	RegionID          int         `gorm:"not null" json:"region_id,omitempty"`
-	GarbageType       GarbageType `gorm:"not null" json:"garbage_type,omitempty"`
-	DayOfWeek         Weekday     `gorm:"not null" json:"day_of_week,omitempty"`
-	WeekNumberOfMonth int         `gorm:"" json:"week_number_of_month,omitempty"`
-	CreatedAt         time.Time   `gorm:"autoCreateTime" json:"created_at,omitempty"`
-	UpdatedAt         time.Time   `gorm:"autoUpdateTime" json:"updated_at,omitempty"`
-	Region            Region      `gorm:"foreignKey:RegionID" json:"region,omitempty"`
-}
 
 type Weekday int
 
@@ -31,7 +16,7 @@ const (
 	Saturday
 )
 
-var weekdayMap = map[Weekday]string{
+var WeekdayMap = map[Weekday]string{
 	Sunday:    "日曜日",
 	Monday:    "月曜日",
 	Tuesday:   "火曜日",
@@ -42,32 +27,7 @@ var weekdayMap = map[Weekday]string{
 }
 
 func (w Weekday) String() string {
-	return weekdayMap[w]
-}
-
-func FindWeekday(s string) (Weekday, int, error) {
-	for k, v := range weekdayMap {
-		// 曜日を取得
-		if strings.Contains(s, v) {
-			// 第何週目かを取得
-			re := regexp.MustCompile(`第(\d)`)
-
-			match := re.FindStringSubmatch(s)
-
-			if len(match) > 0 {
-				weekNum, err := strconv.Atoi(match[1])
-
-				if err != nil {
-					return 0, 0, err
-				}
-
-				return Weekday(k), weekNum, nil
-			}
-
-			return Weekday(k), 0, nil
-		}
-	}
-	return 0, 0, fmt.Errorf("invalid: %s", s)
+	return WeekdayMap[w]
 }
 
 type GarbageType int
@@ -86,4 +46,15 @@ var GarbageTypeMap = map[GarbageType]string{
 
 func (g GarbageType) String() string {
 	return GarbageTypeMap[g]
+}
+
+type GarbageDay struct {
+	ID                int         `gorm:"primaryKey;autoIncrement" json:"id,omitempty"`
+	RegionID          int         `gorm:"not null" json:"region_id,omitempty"`
+	GarbageType       GarbageType `gorm:"not null" json:"garbage_type,omitempty"`
+	DayOfWeek         Weekday     `gorm:"not null" json:"day_of_week,omitempty"`
+	WeekNumberOfMonth int         `gorm:"" json:"week_number_of_month,omitempty"`
+	CreatedAt         time.Time   `gorm:"autoCreateTime" json:"created_at,omitempty"`
+	UpdatedAt         time.Time   `gorm:"autoUpdateTime" json:"updated_at,omitempty"`
+	Region            Region      `gorm:"foreignKey:RegionID" json:"region,omitempty"`
 }
