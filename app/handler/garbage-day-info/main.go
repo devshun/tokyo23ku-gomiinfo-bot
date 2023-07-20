@@ -9,32 +9,25 @@ import (
 	"github.com/aws/aws-lambda-go/lambda"
 	db "github.com/devshun/tokyo23ku-gomiinfo-bot/infrastructure"
 	"github.com/devshun/tokyo23ku-gomiinfo-bot/infrastructure/mysql"
+	"github.com/devshun/tokyo23ku-gomiinfo-bot/usecase"
 )
-
-// TODO: 地域の情報を受け取って以下を返す。
-// {
-//   "燃えるゴミ": "月曜日、木曜日",
-//   "燃えないゴミ": "水曜日",
-//   "資源ゴミ": "第1・第3火曜日",
-// }
-//
 
 type RequestBody struct {
 	Name string
 }
 
-func getGarbageDayInfo(request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
+func getGarbageDayInfo(req events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
 	db, err := db.Init()
 
 	if err != nil {
 		panic(err)
 	}
 
-	fmt.Println(request)
+	fmt.Println(req)
 
 	var content RequestBody
 
-	err = json.Unmarshal([]byte(request.Body), &content)
+	err = json.Unmarshal([]byte(req.Body), &content)
 
 	if err != nil {
 		panic(err)
@@ -46,25 +39,26 @@ func getGarbageDayInfo(request events.APIGatewayProxyRequest) (events.APIGateway
 	regionName := parts[1]
 
 	m := mysql.NewGarbageDayRepository(db)
+	gu := usecase.NewGarbageDayUsecase(m)
 
-	garbageDays, err := m.GetByAreaNames(wardName, regionName)
-
-	fmt.Println(garbageDays)
+	garbageDayInfo, err := gu.GetByAreaNames(wardName, regionName)
 
 	if err != nil {
 		panic(err)
 	}
 
-	garbageDaysJSON, err := json.Marshal(garbageDays)
+	res, err := json.Marshal(garbageDayInfo)
 
-	fmt.Println(string(garbageDaysJSON))
+	if err != nil {
+		panic(err)
+	}
 
 	return events.APIGatewayProxyResponse{
 		StatusCode: 200,
 		Headers: map[string]string{
 			"Content-Type": "application/json",
 		},
-		Body: string(garbageDaysJSON),
+		Body: string(res),
 	}, nil
 
 }
