@@ -8,8 +8,9 @@ import (
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
-	"github.com/devshun/tokyo23ku-gomiinfo-bot/infrastructure"
-	"github.com/devshun/tokyo23ku-gomiinfo-bot/domain/model"
+	db "github.com/devshun/tokyo23ku-gomiinfo-bot/infrastructure"
+	"github.com/devshun/tokyo23ku-gomiinfo-bot/infrastructure/mysql"
+	"github.com/devshun/tokyo23ku-gomiinfo-bot/usecase"
 )
 
 // TODO: 地域の情報を受け取って以下を返す。
@@ -46,16 +47,18 @@ func getGarbageDayInfo(ctx context.Context, request events.APIGatewayProxyReques
 	wardName := parts[0] + "区"
 	regionName := parts[1]
 
-	var garbageDays []model.GarbageDay
+	gp := mysql.NewGarbageDayRepository(db)
+	gu := usecase.NewGarbageDayUsecase(gp)
 
-	err = db.Preload("Region").Preload("Region.Ward").
-		Joins("JOIN regions ON garbage_days.region_id = regions.id").
-		Joins("JOIN wards ON regions.ward_id = wards.id").
-		Where("wards.name = ? AND regions.name = ?", wardName, regionName).
-		Order("garbage_days.garbage_type, garbage_days.day_of_week, garbage_days.week_number_of_month").
-		Find(&garbageDays).Error
+	garbageDays, err := gu.GetByAreaNames(wardName, regionName)
+
+	if err != nil {
+		panic(err)
+	}
 
 	garbageDaysJSON, err := json.Marshal(garbageDays)
+
+	fmt.Println(string(garbageDaysJSON))
 
 	return events.APIGatewayProxyResponse{
 		StatusCode: 200,

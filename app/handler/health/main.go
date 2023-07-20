@@ -1,9 +1,9 @@
-package main
+package handlers
 
 import (
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
-	"github.com/devshun/tokyo23ku-gomiinfo-bot/db"
+	db "github.com/devshun/tokyo23ku-gomiinfo-bot/infrastructure"
 )
 
 func handleRequest() (events.APIGatewayProxyResponse, error) {
