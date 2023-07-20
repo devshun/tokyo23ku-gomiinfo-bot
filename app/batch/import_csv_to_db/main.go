@@ -88,7 +88,7 @@ func importCSVToDB() error {
 
 		var region model.Region
 
-		db.FirstOrCreate(&region, model.Region{Name: record[0], Ward: ward})
+		db.FirstOrCreate(&region, model.Region{Name: record[0], WardID: ward.ID})
 
 		for i, v := range record[1:] {
 			var garbageDay model.GarbageDay

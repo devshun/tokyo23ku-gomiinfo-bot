@@ -4,6 +4,6 @@ CREATE TABLE regions (
   name VARCHAR(255) NOT NULL,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  FOREIGN KEY (ward_id) REFERENCES wards(id)
+  FOREIGN KEY (ward_id) REFERENCES wards(id),
   UNIQUE KEY uc_regions (ward_id, name)
 );
