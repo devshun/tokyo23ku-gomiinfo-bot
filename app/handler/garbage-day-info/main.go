@@ -1,7 +1,6 @@
-package handlers
+package main
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 	"strings"
@@ -10,7 +9,6 @@ import (
 	"github.com/aws/aws-lambda-go/lambda"
 	db "github.com/devshun/tokyo23ku-gomiinfo-bot/infrastructure"
 	"github.com/devshun/tokyo23ku-gomiinfo-bot/infrastructure/mysql"
-	"github.com/devshun/tokyo23ku-gomiinfo-bot/usecase"
 )
 
 // TODO: 地域の情報を受け取って以下を返す。
@@ -25,7 +23,7 @@ type RequestBody struct {
 	Name string
 }
 
-func getGarbageDayInfo(ctx context.Context, request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
+func getGarbageDayInfo(request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
 	db, err := db.Init()
 
 	if err != nil {
@@ -47,10 +45,11 @@ func getGarbageDayInfo(ctx context.Context, request events.APIGatewayProxyReques
 	wardName := parts[0] + "区"
 	regionName := parts[1]
 
-	gp := mysql.NewGarbageDayRepository(db)
-	gu := usecase.NewGarbageDayUsecase(gp)
+	m := mysql.NewGarbageDayRepository(db)
 
-	garbageDays, err := gu.GetByAreaNames(wardName, regionName)
+	garbageDays, err := m.GetByAreaNames(wardName, regionName)
+
+	fmt.Println(garbageDays)
 
 	if err != nil {
 		panic(err)
