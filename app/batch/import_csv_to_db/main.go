@@ -4,13 +4,41 @@ import (
 	"encoding/csv"
 	"fmt"
 	"net/http"
+	"regexp"
+	"strconv"
+	"strings"
 
 	"github.com/aws/aws-lambda-go/lambda"
-	"github.com/devshun/tokyo23ku-gomiinfo-bot/db"
 	"github.com/devshun/tokyo23ku-gomiinfo-bot/domain/model"
+	db "github.com/devshun/tokyo23ku-gomiinfo-bot/infrastructure"
 	"golang.org/x/text/encoding/japanese"
 	"golang.org/x/text/transform"
 )
+
+func FindWeekday(s string) (model.Weekday, int, error) {
+	for k, v := range model.WeekdayMap {
+		// 曜日を取得
+		if strings.Contains(s, v) {
+			// 第何週目かを取得
+			re := regexp.MustCompile(`第(\d)`)
+
+			match := re.FindStringSubmatch(s)
+
+			if len(match) > 0 {
+				weekNum, err := strconv.Atoi(match[1])
+
+				if err != nil {
+					return 0, 0, err
+				}
+
+				return model.Weekday(k), weekNum, nil
+			}
+
+			return model.Weekday(k), 0, nil
+		}
+	}
+	return 0, 0, fmt.Errorf("invalid: %s", s)
+}
 
 func importCSVToDB() error {
 
@@ -65,7 +93,7 @@ func importCSVToDB() error {
 		for i, v := range record[1:] {
 			var garbageDay model.GarbageDay
 
-			weekday, weekNum, err := model.FindWeekday(v)
+			weekday, weekNum, err := FindWeekday(v)
 
 			if err != nil {
 				panic(err)

@@ -1,4 +1,4 @@
-package main
+package handlers
 
 import (
 	"context"
@@ -8,7 +8,7 @@ import (
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
-	"github.com/devshun/tokyo23ku-gomiinfo-bot/db"
+	"github.com/devshun/tokyo23ku-gomiinfo-bot/infrastructure"
 	"github.com/devshun/tokyo23ku-gomiinfo-bot/domain/model"
 )
 
@@ -43,7 +43,6 @@ func getGarbageDayInfo(ctx context.Context, request events.APIGatewayProxyReques
 
 	parts := strings.SplitN(content.Name, "区", 2)
 
-	// Add "区" back to the ward name
 	wardName := parts[0] + "区"
 	regionName := parts[1]
 
