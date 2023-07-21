@@ -52,10 +52,11 @@ func postLineMessage(userid string, message string) error {
 
 func getAreaStr(address string) (string, string) {
 	parts := strings.Split(address, " ")
-	addressParts := strings.Split(parts[1], " ")
+	addressParts := strings.Split(parts[2], " ")
 	a := addressParts[0]
 
-	pattern := `(?P<ward>[^都]+区)(?P<region>[^\d]+丁目)`
+	// NOTE: とりあえず、○丁目の部分は削除とする
+	pattern := `(?P<ward>[^都]+区)(?P<region>[^\d]*[^０-９]*)丁目`
 	re := regexp.MustCompile(pattern)
 	matches := re.FindStringSubmatch(a)
 
@@ -67,10 +68,14 @@ func getAreaStr(address string) (string, string) {
 		}
 	}
 
-	fmt.Println("ward: ", paramsMap["ward"])
-	fmt.Println("region: ", paramsMap["region"])
+	patternDigits := `[０-９]+$`
+	reDigits := regexp.MustCompile(patternDigits)
+	region := reDigits.ReplaceAllString(paramsMap["region"], "")
 
-	return paramsMap["ward"], paramsMap["region"]
+	fmt.Println("ward: ", paramsMap["ward"])
+	fmt.Println("region: ", region)
+
+	return paramsMap["ward"], region
 }
 
 func handleRequest(req events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
