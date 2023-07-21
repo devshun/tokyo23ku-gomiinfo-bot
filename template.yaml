@@ -48,6 +48,8 @@ Resources:
         Variables:
           MYSQL_ROOT_PASSWORD: !Ref MYSQL_ROOT_PASSWORD
           MYSQL_DATABASE: !Ref MYSQL_DATABASE
+          CHANNEL_SECRET: !Ref CHANNEL_SECRET
+          CHANNEL_TOKEN: !Ref CHANNEL_TOKEN
   ImportCsvToDbFunction:
     Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
     Properties:

@@ -4,6 +4,7 @@ go 1.20
 
 require (
 	github.com/aws/aws-lambda-go v1.41.0
+	github.com/line/line-bot-sdk-go/v7 v7.20.0
 	golang.org/x/text v0.11.0
 	gorm.io/driver/mysql v1.5.1
 	gorm.io/gorm v1.25.2
