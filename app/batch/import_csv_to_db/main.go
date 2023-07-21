@@ -55,14 +55,10 @@ func importCSVToDB() error {
 	resp, err := http.Get(url)
 
 	if err != nil {
-		panic(err)
+		return err
 	}
 
 	defer resp.Body.Close()
-
-	if err != nil {
-		panic(err)
-	}
 
 	// ShiftJISをUTF-8に変換
 	reader := transform.NewReader(resp.Body, japanese.ShiftJIS.NewDecoder())
@@ -72,7 +68,7 @@ func importCSVToDB() error {
 	rows, err := r.ReadAll()
 
 	if err != nil {
-		panic(err)
+		return err
 	}
 
 	var ward model.Ward
@@ -81,7 +77,6 @@ func importCSVToDB() error {
 
 	header := rows[0][1:]
 
-	fmt.Println(header)
 	records := rows[1:]
 
 	for _, record := range records {
@@ -96,7 +91,7 @@ func importCSVToDB() error {
 			weekday, weekNum, err := FindWeekday(v)
 
 			if err != nil {
-				panic(err)
+				return err
 			}
 
 			garbageType := func() model.GarbageType {
