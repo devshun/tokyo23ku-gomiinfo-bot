@@ -20,7 +20,10 @@ func getGarbageDayInfo(req events.APIGatewayProxyRequest) (events.APIGatewayProx
 	db, err := db.Init()
 
 	if err != nil {
-		panic(err)
+		return events.APIGatewayProxyResponse{
+			StatusCode: 500,
+			Body:       err.Error(),
+		}, nil
 	}
 
 	fmt.Println(req)

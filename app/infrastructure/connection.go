@@ -10,8 +10,10 @@ import (
 
 func Init() (*gorm.DB, error) {
 
-	dsn := fmt.Sprintf("root:%s@tcp(db:3306)/%s?charset=utf8mb4&parseTime=True&loc=Local",
+	dsn := fmt.Sprintf("%s:%s@tcp(%s:3306)/%s?charset=utf8mb4&parseTime=True&loc=Local",
+		os.Getenv("MYSQL_USER"),
 		os.Getenv("MYSQL_ROOT_PASSWORD"),
+		os.Getenv("MYSQL_HOST"),
 		os.Getenv("MYSQL_DATABASE"),
 	)
 

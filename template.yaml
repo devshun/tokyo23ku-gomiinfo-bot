@@ -5,12 +5,40 @@ Description: >
 
   Sample SAM Template for sam-app
 
+Parameters:
+  Role:
+    Type: String
+    Description: Role arn
+  MySQLUser:
+    Type: String
+    Description: MySQL user
+  MySQLRootPassword:
+    Type: String
+    Description: MySQL root password
+  MySQLHost:
+    Type: String
+    Description: MySQL host
+  MySQLDatabase:
+    Type: String
+    Description: MySQL database name
+  ChannelSecret:
+    Type: String
+    Description: LINE Bot Channel Secret
+  ChannelToken:
+    Type: String
+    Description: LINE Bot Channel Token
+
 # More info about Globals: https://github.com/awslabs/serverless-application-model/blob/master/docs/globals.rst
 Globals:
   Function:
     Timeout: 5
     MemorySize: 128
-
+    Environment:
+      Variables:
+        MYSQL_USER: !Ref MySQLUser
+        MYSQL_ROOT_PASSWORD: !Ref MySQLRootPassword
+        MYSQL_HOST: !Ref MySQLHost
+        MYSQL_DATABASE: !Ref MySQLDatabase
 Resources:
   HealthCheckFunction:
     Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
@@ -18,6 +46,7 @@ Resources:
       CodeUri: app/handler/health/
       Handler: health
       Runtime: go1.x
+      Role: !Ref Role
       Architectures:
         - x86_64
       Events:
@@ -26,16 +55,13 @@ Resources:
           Properties:
             Path: /health
             Method: GET
-      Environment: # More info about Env Vars: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#environment-object
-        Variables:
-          MYSQL_ROOT_PASSWORD: !Ref MYSQL_ROOT_PASSWORD
-          MYSQL_DATABASE: !Ref MYSQL_DATABASE
   GarbageDayInfoFunction:
     Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
     Properties:
       CodeUri: app/handler/garbage-day-info/
       Handler: garbage-day-info
       Runtime: go1.x
+      Role: !Ref Role
       Architectures:
         - x86_64
       Events:
@@ -43,41 +69,27 @@ Resources:
           Type: Api # More info about API Event Source: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#api
           Properties:
             Path: /garbage-day-info
-            Method: GET
+            Method: POST
       Environment: # More info about Env Vars: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#environment-object
         Variables:
-          MYSQL_ROOT_PASSWORD: !Ref MYSQL_ROOT_PASSWORD
-          MYSQL_DATABASE: !Ref MYSQL_DATABASE
-          CHANNEL_SECRET: !Ref CHANNEL_SECRET
-          CHANNEL_TOKEN: !Ref CHANNEL_TOKEN
+          CHANNEL_SECRET: !Ref ChannelSecret
+          CHANNEL_TOKEN: !Ref ChannelToken
   ImportCsvToDbFunction:
     Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
     Properties:
       CodeUri: app/batch/import_csv_to_db/
       Handler: import_csv_to_db
       Runtime: go1.x
-      # Role: arn:aws:iam::880843126767:role/go-academy-lambda
+      Role: !Ref Role
       Architectures:
         - x86_64
       Events:
         ScheduleEvent:
           Type: Schedule
           Properties:
-            Schedule: rate(1 minute)
-      Environment: # More info about Env Vars: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#environment-object
-        Variables:
-          MYSQL_ROOT_PASSWORD: !Ref MYSQL_ROOT_PASSWORD
-          MYSQL_DATABASE: !Ref MYSQL_DATABASE
+            # 日本時間 0時に実行
+            Schedule: rate(2 hours)
 Outputs:
-  # ServerlessRestApi is an implicit API created out of Events key under Serverless::Function
-  # Find out more about other implicit resources you can reference within SAM
-  # https://github.com/awslabs/serverless-application-model/blob/master/docs/internals/generated_resources.rst#api
-  # HelloWorldAPI:
-  #   Description: "API Gateway endpoint URL for Prod environment for First Function"
-  #   Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/hello/"
-  # HelloWorldFunction:
-  #   Description: "First Lambda Function ARN"
-  #   Value: !GetAtt HelloWorldFunction.Arn
-  # HelloWorldFunctionIamRole:
-  #   Description: "Implicit IAM Role created for Hello World function"
-  #   Value: !GetAtt HelloWorldFunctionRole.Arn
+  ApiGatewayUrl:
+    Description: "API Gateway URL"
+    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/"
