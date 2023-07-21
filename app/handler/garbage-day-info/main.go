@@ -3,6 +3,9 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"log"
+	"os"
+	"regexp"
 	"strings"
 
 	"github.com/aws/aws-lambda-go/events"
@@ -10,13 +13,68 @@ import (
 	db "github.com/devshun/tokyo23ku-gomiinfo-bot/infrastructure"
 	"github.com/devshun/tokyo23ku-gomiinfo-bot/infrastructure/mysql"
 	"github.com/devshun/tokyo23ku-gomiinfo-bot/usecase"
+	"github.com/line/line-bot-sdk-go/v7/linebot"
 )
 
 type RequestBody struct {
-	Name string
+	Events []struct {
+		ReplyToken string `json:"replyToken,omitempty"`
+		Type       string `json:"type,omitempty"`
+		Timestamp  int64  `json:"timestamp,omitempty"`
+		Source     struct {
+			Type   string `json:"type,omitempty"`
+			UserID string `json:"userId,omitempty"`
+		} `json:"source,omitempty"`
+		Message struct {
+			ID        string  `json:"id,omitempty"`
+			Type      string  `json:"type,omitempty"`
+			Title     string  `json:"title,omitempty"`
+			Address   string  `json:"address,omitempty"`
+			Latitude  float64 `json:"latitude,omitempty"`
+			Longitude float64 `json:"longitude,omitempty"`
+		} `json:"message,omitempty"`
+	} `json:"events,omitempty"`
 }
 
-func getGarbageDayInfo(req events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
+func postLineMessage(userid string, message string) error {
+	bot, err := linebot.New(os.Getenv("CHANNEL_SECRET"), os.Getenv("CHANNEL_TOKEN"))
+	if err != nil {
+		return err
+	}
+
+	fmt.Println("返信情報: ", userid, message)
+
+	if _, err := bot.PushMessage(userid, linebot.NewTextMessage(message)).Do(); err != nil {
+		return err
+	}
+	return nil
+}
+
+func getAreaStr(address string) (string, string) {
+	parts := strings.Split(address, " ")
+	addressParts := strings.Split(parts[1], " ")
+	a := addressParts[0]
+
+	pattern := `(?P<ward>[^都]+区)(?P<region>[^\d]+丁目)`
+	re := regexp.MustCompile(pattern)
+	matches := re.FindStringSubmatch(a)
+
+	paramsMap := make(map[string]string)
+
+	for i, name := range re.SubexpNames() {
+		if i > 0 && i <= len(matches) {
+			paramsMap[name] = matches[i]
+		}
+	}
+
+	fmt.Println("ward: ", paramsMap["ward"])
+	fmt.Println("region: ", paramsMap["region"])
+
+	return paramsMap["ward"], paramsMap["region"]
+}
+
+func handleRequest(req events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
+
 	db, err := db.Init()
 
 	if err != nil {
@@ -26,34 +84,43 @@ func getGarbageDayInfo(req events.APIGatewayProxyRequest) (events.APIGatewayProx
 		}, nil
 	}
 
-	fmt.Println(req)
-
-	var content RequestBody
-
-	err = json.Unmarshal([]byte(req.Body), &content)
-
-	if err != nil {
-		panic(err)
-	}
-
-	parts := strings.SplitN(content.Name, "区", 2)
-
-	wardName := parts[0] + "区"
-	regionName := parts[1]
-
 	m := mysql.NewGarbageDayRepository(db)
 	gu := usecase.NewGarbageDayUsecase(m)
 
-	garbageDayInfo, err := gu.GetByAreaNames(wardName, regionName)
+	var event RequestBody
+
+	err = json.Unmarshal([]byte(req.Body), &event)
 
 	if err != nil {
-		panic(err)
+		log.Fatalln("Failed to parse request body: ", err)
 	}
 
-	res, err := json.Marshal(garbageDayInfo)
+	// 最初の要素のみ取得
+	r := event.Events[0]
 
-	if err != nil {
-		panic(err)
+	fmt.Println("evnet:", r)
+	fmt.Println("userid:", r.Source.UserID)
+
+	fmt.Println("type:", r.Message.Type)
+
+	if r.Message.Type == "location" {
+
+		ward, region := getAreaStr(r.Message.Address)
+
+		garbageDayInfo, err := gu.GetByAreaNames(ward, region)
+
+		if err != nil {
+			return events.APIGatewayProxyResponse{
+				StatusCode: 500,
+				Body:       err.Error(),
+			}, nil
+		}
+
+		err = postLineMessage(r.Source.UserID, fmt.Sprintf("燃えるゴミ: %s, 燃えないごみ, %s, 資源ごみ: %s", garbageDayInfo.Burnable, garbageDayInfo.NonBurnable, garbageDayInfo.Recyclable))
+
+		if err != nil {
+			log.Fatalln("Failed to post line message: ", err)
+		}
 	}
 
 	return events.APIGatewayProxyResponse{
@@ -61,11 +128,9 @@ func getGarbageDayInfo(req events.APIGatewayProxyRequest) (events.APIGatewayProx
 		Headers: map[string]string{
 			"Content-Type": "application/json",
 		},
-		Body: string(res),
 	}, nil
-
 }
 
 func main() {
-	lambda.Start(getGarbageDayInfo)
+	lambda.Start(handleRequest)
 }
