@@ -1,7 +1,6 @@
 package usecase
 
 import (
-	"fmt"
 	"strings"
 
 	"github.com/devshun/tokyo23ku-gomiinfo-bot/domain/model"
@@ -26,6 +25,7 @@ func NewGarbageDayUsecase(garbageDayRepository repository.GarbageDayRepository) 
 
 func (gu *garbageDayUsecase) GetByAreaNames(wardName string, regionName string) (GarbageDayInfo, error) {
 	garbageDays, err := gu.garbageDayRepo.GetByAreaNames(wardName, regionName)
+
 	if err != nil {
 		return GarbageDayInfo{}, err
 	}
@@ -36,13 +36,7 @@ func (gu *garbageDayUsecase) GetByAreaNames(wardName string, regionName string) 
 
 	for _, garbageDay := range garbageDays {
 
-		fmt.Println(garbageDay)
-
-		dayOfWeek := garbageDay.DayOfWeek.String()
-
-		if garbageDay.WeekNumberOfMonth > 0 {
-			dayOfWeek = fmt.Sprintf("第%d%s", garbageDay.WeekNumberOfMonth, dayOfWeek)
-		}
+		dayOfWeek := garbageDay.Format()
 
 		switch garbageDay.GarbageType {
 		case model.Burnable:

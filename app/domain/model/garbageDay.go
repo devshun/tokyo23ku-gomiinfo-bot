@@ -1,6 +1,7 @@
 package model
 
 import (
+	"fmt"
 	"time"
 )
 
@@ -57,4 +58,14 @@ type GarbageDay struct {
 	CreatedAt         time.Time   `gorm:"autoCreateTime" json:"created_at,omitempty"`
 	UpdatedAt         time.Time   `gorm:"autoUpdateTime" json:"updated_at,omitempty"`
 	Region            Region      `gorm:"foreignKey:RegionID" json:"region,omitempty"`
+}
+
+func (gd *GarbageDay) Format() string {
+	dayOfWeek := gd.DayOfWeek.String()
+
+	if gd.WeekNumberOfMonth > 0 {
+		dayOfWeek = fmt.Sprintf("第%d%s", gd.WeekNumberOfMonth, dayOfWeek)
+	}
+
+	return dayOfWeek
 }
