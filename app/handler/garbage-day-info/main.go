@@ -3,7 +3,6 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"log"
 	"os"
 	"regexp"
 	"strings"
@@ -42,17 +41,18 @@ func postLineMessage(userid string, message string) error {
 		return err
 	}
 
-	fmt.Println("返信情報: ", userid, message)
+	_, err = bot.PushMessage(userid, linebot.NewTextMessage(message)).Do()
 
-	if _, err := bot.PushMessage(userid, linebot.NewTextMessage(message)).Do(); err != nil {
+	if err != nil {
 		return err
 	}
+
 	return nil
 }
 
 func getAreaStr(address string) (string, string) {
 	parts := strings.Split(address, " ")
-	addressParts := strings.Split(parts[2], " ")
+	addressParts := strings.Split(parts[1], " ")
 	a := addressParts[0]
 
 	// NOTE: とりあえず、○丁目の部分は削除とする
@@ -97,16 +97,14 @@ func handleRequest(req events.APIGatewayProxyRequest) (events.APIGatewayProxyRes
 	err = json.Unmarshal([]byte(req.Body), &event)
 
 	if err != nil {
-		log.Fatalln("Failed to parse request body: ", err)
+		return events.APIGatewayProxyResponse{
+			StatusCode: 500,
+			Body:       err.Error(),
+		}, nil
 	}
 
 	// 最初の要素のみ取得
 	r := event.Events[0]
-
-	fmt.Println("evnet:", r)
-	fmt.Println("userid:", r.Source.UserID)
-
-	fmt.Println("type:", r.Message.Type)
 
 	if r.Message.Type == "location" {
 
@@ -121,10 +119,16 @@ func handleRequest(req events.APIGatewayProxyRequest) (events.APIGatewayProxyRes
 			}, nil
 		}
 
-		err = postLineMessage(r.Source.UserID, fmt.Sprintf("燃えるゴミ: %s, 燃えないごみ, %s, 資源ごみ: %s", garbageDayInfo.Burnable, garbageDayInfo.NonBurnable, garbageDayInfo.Recyclable))
+		m := fmt.Sprintf("燃えるゴミ: %s\n燃えないごみ: %s\n資源ごみ: %s",
+			garbageDayInfo.Burnable, garbageDayInfo.NonBurnable, garbageDayInfo.Recyclable)
+
+		err = postLineMessage(r.Source.UserID, m)
 
 		if err != nil {
-			log.Fatalln("Failed to post line message: ", err)
+			return events.APIGatewayProxyResponse{
+				StatusCode: 500,
+				Body:       err.Error(),
+			}, nil
 		}
 	}
 
