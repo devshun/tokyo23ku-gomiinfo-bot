@@ -1,0 +1,36 @@
+linters-settings:
+  funlen:
+    lines: 100
+    statements: 50
+
+linters:
+  enable:
+    - bodyclose
+    - cyclop
+    - dogsled
+    - dupl
+    - durationcheck
+    - errorlint
+    - exhaustive
+    - exhaustivestruct
+    - exportloopref
+    - forcetypeassert
+    - funlen
+    - gci
+    - gochecknoglobals
+    - gochecknoinits
+    - goconst
+    - gocritic
+    - gomnd
+    - gomoddirectives
+    - goprintffuncname
+    - gosec
+    - ifshort
+    - nakedret
+    - nestif
+    - nilerr
+    - nlreturn
+    - paralleltest
+    - prealloc
+    - tagliatelle
+    - unconvert
