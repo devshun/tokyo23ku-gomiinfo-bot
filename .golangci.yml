@@ -16,6 +16,7 @@ linters:
     - forcetypeassert
     - funlen
     - gci
+    - gofmt
     - gochecknoinits
     - goconst
     - gocritic
