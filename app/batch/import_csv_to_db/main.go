@@ -4,45 +4,34 @@ import (
 	"encoding/csv"
 	"fmt"
 	"net/http"
-	"regexp"
-	"strconv"
-	"strings"
+	"sync"
 
 	"github.com/aws/aws-lambda-go/lambda"
+	"github.com/devshun/tokyo23ku-gomiinfo-bot/batch/import_csv_to_db/importers"
 	"github.com/devshun/tokyo23ku-gomiinfo-bot/domain/model"
 	db "github.com/devshun/tokyo23ku-gomiinfo-bot/infrastructure"
 	"golang.org/x/text/encoding/japanese"
 	"golang.org/x/text/transform"
+	"gorm.io/gorm"
 )
 
-func FindWeekday(s string) (model.Weekday, int, error) {
-	for k, v := range model.WeekdayMap {
-		// 曜日を取得
-		if strings.Contains(s, v) {
-			// 第何週目かを取得
-			re := regexp.MustCompile(`第(\d)`)
+type Config struct {
+	name          string
+	url           string
+	importPackage func(db *gorm.DB, ward model.Ward, records [][]string) error
+}
 
-			match := re.FindStringSubmatch(s)
-
-			if len(match) > 0 {
-				weekNum, err := strconv.Atoi(match[1])
-
-				if err != nil {
-					return 0, 0, err
-				}
-
-				return model.Weekday(k), weekNum, nil
-			}
-
-			return model.Weekday(k), 0, nil
-		}
-	}
-	return 0, 0, fmt.Errorf("invalid: %s", s)
+var config = []Config{
+	{
+		name:          "墨田区",
+		url:           "https://www.city.sumida.lg.jp/kuseijoho/sumida_info/opendata/opendata_ichiran/gomirecycle_data/bunbetu_data.files/bunbetu_20151029.csv",
+		importPackage: importers.ImportSumidakuCSV,
+	},
 }
 
 func importCSVToDB() error {
 
-	fmt.Println("INFO: ゴミ情報の更新を開始します")
+	fmt.Println("INFO: ゴミ情報のインポートを開始します")
 
 	db, err := db.Init()
 
@@ -50,68 +39,54 @@ func importCSVToDB() error {
 		return err
 	}
 
-	url := "https://www.city.sumida.lg.jp/kuseijoho/sumida_info/opendata/opendata_ichiran/gomirecycle_data/bunbetu_data.files/bunbetu_20151029.csv"
+	wg := sync.WaitGroup{}
 
-	resp, err := http.Get(url)
+	wg.Add(len(config))
 
-	if err != nil {
-		return err
-	}
+	for _, c := range config {
 
-	defer resp.Body.Close()
+		go func(c Config) {
+			defer wg.Done()
 
-	// ShiftJISをUTF-8に変換
-	reader := transform.NewReader(resp.Body, japanese.ShiftJIS.NewDecoder())
-
-	r := csv.NewReader(reader)
-
-	rows, err := r.ReadAll()
-
-	if err != nil {
-		return err
-	}
-
-	var ward model.Ward
-
-	db.FirstOrCreate(&ward, model.Ward{Name: "墨田区"})
-
-	header := rows[0][1:]
-
-	records := rows[1:]
-
-	for _, record := range records {
-
-		var region model.Region
-
-		db.FirstOrCreate(&region, model.Region{Name: record[0], WardID: ward.ID})
-
-		for i, v := range record[1:] {
-			var garbageDay model.GarbageDay
-
-			weekday, weekNum, err := FindWeekday(v)
+			resp, err := http.Get(c.url)
 
 			if err != nil {
-				return err
+				fmt.Println(err)
 			}
 
-			garbageType := func() model.GarbageType {
-				if header[i] == "燃やすごみの収集曜日" {
-					return model.Burnable
-				}
-				if header[i] == "燃やさないごみの収集曜日" {
-					return model.NonBurnable
-				}
-				if header[i] == "資源物の収集曜日" {
-					return model.Recyclable
-				}
-				return 0
-			}()
+			defer resp.Body.Close()
 
-			db.FirstOrCreate(&garbageDay, model.GarbageDay{RegionID: region.ID, GarbageType: garbageType, DayOfWeek: weekday, WeekNumberOfMonth: weekNum})
-		}
+			// ShiftJISをUTF-8に変換
+			reader := transform.NewReader(resp.Body, japanese.ShiftJIS.NewDecoder())
+
+			r := csv.NewReader(reader)
+
+			records, err := r.ReadAll()
+
+			if err != nil {
+				fmt.Println(err)
+			}
+
+			var ward model.Ward
+
+			err = db.FirstOrCreate(&ward, model.Ward{Name: c.name}).Error
+
+			if err != nil {
+				fmt.Println(err)
+			}
+
+			err = c.importPackage(db, ward, records)
+
+			if err != nil {
+				fmt.Println(err)
+			}
+
+		}(c)
 	}
 
-	fmt.Println("INFO: ゴミ情報の更新を終了します")
+	wg.Wait()
+
+	fmt.Println("INFO: ゴミ情報のインポートを終了します")
 
 	return nil
 }
