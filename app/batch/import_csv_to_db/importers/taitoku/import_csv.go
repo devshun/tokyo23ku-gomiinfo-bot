@@ -26,14 +26,15 @@ var garbageTypeLabelMap = map[string]model.GarbageType{
 	"資源":      model.Recyclable,
 }
 
-func getWeekday(s string) (model.Weekday, int, error) {
+func getWeekday(s string) (model.Weekday, error) {
 	for k, v := range weekdayLabelMap {
 		// 曜日を取得
 		if strings.Contains(s, k) {
-			return v, 0, nil
+			return v, nil
 		}
 	}
-	return 0, 0, fmt.Errorf("invalid: %s", s)
+
+	return 0, fmt.Errorf("invalid: %s", s)
 }
 
 func getGarbageType(s string) model.GarbageType {
@@ -47,7 +48,10 @@ func getGarbageType(s string) model.GarbageType {
 	return v
 }
 
-func ImportTaitokuCSV(db *gorm.DB, ward model.Ward, records [][]string) error {
+// Header: [索引 町丁名 資源 燃やすごみ 燃やさないごみ]
+// Row: [あ 秋葉原 水曜 月曜・木曜 その月の1回目・3回目の土曜日]
+
+func ImportTaitokuCSV(db *gorm.DB, ward model.Ward, records [][]string) error { // nolint:funlen, cyclop
 
 	header := records[0][1:]
 
@@ -84,7 +88,7 @@ func ImportTaitokuCSV(db *gorm.DB, ward model.Ward, records [][]string) error {
 
 			for _, name := range n {
 
-				weekday, weekNum, err := getWeekday(name)
+				weekday, err := getWeekday(name)
 
 				if err != nil {
 					return err
@@ -92,10 +96,9 @@ func ImportTaitokuCSV(db *gorm.DB, ward model.Ward, records [][]string) error {
 
 				for _, r := range regions {
 					garbageDays = append(garbageDays, model.GarbageDay{
-						RegionID:          r.ID,
-						GarbageType:       gerbageType,
-						DayOfWeek:         weekday,
-						WeekNumberOfMonth: weekNum,
+						RegionID:    r.ID,
+						GarbageType: gerbageType,
+						DayOfWeek:   weekday,
 					})
 				}
 
@@ -104,17 +107,10 @@ func ImportTaitokuCSV(db *gorm.DB, ward model.Ward, records [][]string) error {
 
 		// 燃えないごみ
 		// NOTE: 文字列が特殊なため個別で扱っている。。。
-		weekday, err := func() (model.Weekday, error) {
-			for k, v := range weekdayLabelMap {
-				if strings.Contains(row[4], k) {
-					return v, nil
-				}
-			}
-			return 0, fmt.Errorf("invalid: %s", row[4])
-		}()
+		weekday, err := getWeekday(row[4])
 
 		if err != nil {
-			return nil
+			return err
 		}
 
 		weekNums, err := func() ([]int, error) {
@@ -130,6 +126,7 @@ func ImportTaitokuCSV(db *gorm.DB, ward model.Ward, records [][]string) error {
 				}
 				nums = append(nums, num)
 			}
+
 			return nums, nil
 		}()
 

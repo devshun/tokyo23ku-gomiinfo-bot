@@ -37,6 +37,7 @@ type RequestBody struct {
 
 func postLineMessage(userid string, message string) error {
 	bot, err := linebot.New(os.Getenv("CHANNEL_SECRET"), os.Getenv("CHANNEL_TOKEN"))
+
 	if err != nil {
 		return err
 	}
@@ -86,7 +87,7 @@ func handleRequest(req events.APIGatewayProxyRequest) (events.APIGatewayProxyRes
 		return events.APIGatewayProxyResponse{
 			StatusCode: 500,
 			Body:       err.Error(),
-		}, nil
+		}, err
 	}
 
 	m := mysql.NewGarbageDayRepository(db)
@@ -100,7 +101,7 @@ func handleRequest(req events.APIGatewayProxyRequest) (events.APIGatewayProxyRes
 		return events.APIGatewayProxyResponse{
 			StatusCode: 500,
 			Body:       err.Error(),
-		}, nil
+		}, err
 	}
 
 	// 最初の要素のみ取得
@@ -116,19 +117,16 @@ func handleRequest(req events.APIGatewayProxyRequest) (events.APIGatewayProxyRes
 			return events.APIGatewayProxyResponse{
 				StatusCode: 500,
 				Body:       err.Error(),
-			}, nil
+			}, err
 		}
 
-		m := fmt.Sprintf("燃えるゴミ: %s\n燃えないごみ: %s\n資源ごみ: %s",
-			garbageDayInfo.Burnable, garbageDayInfo.NonBurnable, garbageDayInfo.Recyclable)
-
-		err = postLineMessage(r.Source.UserID, m)
+		err = postLineMessage(r.Source.UserID, garbageDayInfo.Format())
 
 		if err != nil {
 			return events.APIGatewayProxyResponse{
 				StatusCode: 500,
 				Body:       err.Error(),
-			}, nil
+			}, err
 		}
 	}
 

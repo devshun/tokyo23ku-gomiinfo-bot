@@ -14,7 +14,7 @@ func handleRequest() (events.APIGatewayProxyResponse, error) {
 		return events.APIGatewayProxyResponse{
 			StatusCode: 500,
 			Body:       err.Error(),
-		}, nil
+		}, err
 	}
 
 	return events.APIGatewayProxyResponse{

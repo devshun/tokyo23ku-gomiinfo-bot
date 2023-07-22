@@ -1,6 +1,7 @@
 package usecase
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/devshun/tokyo23ku-gomiinfo-bot/domain/model"
@@ -39,6 +40,7 @@ func (gu *garbageDayUsecase) GetByAreaNames(wardName string, regionName string) 
 		dayOfWeek := garbageDay.Format()
 
 		switch garbageDay.GarbageType {
+
 		case model.Burnable:
 			burnableDays = append(burnableDays, dayOfWeek)
 		case model.NonBurnable:
@@ -53,4 +55,16 @@ func (gu *garbageDayUsecase) GetByAreaNames(wardName string, regionName string) 
 		NonBurnable: strings.Join(nonBurnableDays, "、"),
 		Recyclable:  strings.Join(recyclableDays, "、"),
 	}, nil
+}
+
+func (gi *GarbageDayInfo) Format() string {
+
+	if len(gi.Burnable) == 0 && len(gi.NonBurnable) == 0 && len(gi.Recyclable) == 0 {
+		return "ごみ収集日のデータが見つかりません"
+	}
+
+	m := fmt.Sprintf("燃えるゴミ: %s\n燃えないごみ: %s\n資源ごみ: %s",
+		gi.Burnable, gi.NonBurnable, gi.Recyclable)
+
+	return m
 }

@@ -49,6 +49,7 @@ func getWeekday(s string) (model.Weekday, int, error) {
 			return v, 0, nil
 		}
 	}
+
 	return 0, 0, fmt.Errorf("invalid: %s", s)
 }
 
@@ -63,6 +64,9 @@ func getGarbageType(s string) model.GarbageType {
 
 	return v
 }
+
+// Header: [地域 資源物の収集曜日 燃やすごみの収集曜日 燃やすごみの収集曜日 燃やさないごみの収集曜日 燃やさないごみの収集曜日]
+// Row: [吾妻橋 土曜日 火曜日 金曜日 第1月曜日 第3月曜日]
 
 func ImportSumidakuCSV(db *gorm.DB, ward model.Ward, records [][]string) error {
 

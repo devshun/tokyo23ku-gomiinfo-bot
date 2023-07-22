@@ -23,7 +23,7 @@ func Init() (*gorm.DB, error) {
 		return nil, err
 	}
 
-	fmt.Println("db connection success!!")
+	fmt.Println("INFO: db connection success!!")
 
 	return db, nil
 }

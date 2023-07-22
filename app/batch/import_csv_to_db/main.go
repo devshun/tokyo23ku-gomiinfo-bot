@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/aws/aws-lambda-go/lambda"
+	"github.com/devshun/tokyo23ku-gomiinfo-bot/batch/import_csv_to_db/importers/sumidaku"
 	"github.com/devshun/tokyo23ku-gomiinfo-bot/batch/import_csv_to_db/importers/taitoku"
 	"github.com/devshun/tokyo23ku-gomiinfo-bot/domain/model"
 	db "github.com/devshun/tokyo23ku-gomiinfo-bot/infrastructure"
@@ -23,11 +24,11 @@ type Config struct {
 }
 
 var config = []Config{
-	// {
-	// 	name:          "墨田区",
-	// 	url:           "https://www.city.sumida.lg.jp/kuseijoho/sumida_info/opendata/opendata_ichiran/gomirecycle_data/bunbetu_data.files/bunbetu_20151029.csv",
-	// 	importPackage: sumidaku.ImportSumidakuCSV,
-	// },
+	{
+		name:          "墨田区",
+		url:           "https://www.city.sumida.lg.jp/kuseijoho/sumida_info/opendata/opendata_ichiran/gomirecycle_data/bunbetu_data.files/bunbetu_20151029.csv",
+		importPackage: sumidaku.ImportSumidakuCSV,
+	},
 	{
 		name:          "台東区",
 		url:           "https://www.opendata.metro.tokyo.lg.jp/taitou/chiikibetu_youbi_ichiran.csv",

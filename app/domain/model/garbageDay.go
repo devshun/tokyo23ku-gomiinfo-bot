@@ -51,12 +51,12 @@ func (g GarbageType) String() string {
 
 type GarbageDay struct {
 	ID                int         `gorm:"primaryKey;autoIncrement" json:"id,omitempty"`
-	RegionID          int         `gorm:"not null" json:"region_id,omitempty"`
-	GarbageType       GarbageType `gorm:"not null" json:"garbage_type,omitempty"`
-	DayOfWeek         Weekday     `gorm:"not null" json:"day_of_week,omitempty"`
-	WeekNumberOfMonth int         `gorm:"" json:"week_number_of_month,omitempty"`
-	CreatedAt         time.Time   `gorm:"autoCreateTime" json:"created_at,omitempty"`
-	UpdatedAt         time.Time   `gorm:"autoUpdateTime" json:"updated_at,omitempty"`
+	RegionID          int         `gorm:"not null" json:"regionId,omitempty"`
+	GarbageType       GarbageType `gorm:"not null" json:"garbageType,omitempty"`
+	DayOfWeek         Weekday     `gorm:"not null" json:"dayOfWeek,omitempty"`
+	WeekNumberOfMonth int         `gorm:"" json:"weekNumberOfMonth,omitempty"`
+	CreatedAt         time.Time   `gorm:"autoCreateTime" json:"createdAt,omitempty"`
+	UpdatedAt         time.Time   `gorm:"autoUpdateTime" json:"updatedAt,omitempty"`
 	Region            Region      `gorm:"foreignKey:RegionID" json:"region,omitempty"`
 }
 
