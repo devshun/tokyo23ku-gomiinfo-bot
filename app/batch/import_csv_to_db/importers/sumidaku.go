@@ -5,63 +5,14 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/devshun/tokyo23ku-gomiinfo-bot/domain/model"
 	"gorm.io/gorm"
 )
 
-func ImportSumidakuCSV(db *gorm.DB, ward model.Ward, records [][]string) error {
-	header := records[0][1:]
-
-	rows := records[1:]
-
-	for _, row := range rows {
-
-		var region model.Region
-
-		err := db.FirstOrCreate(&region, model.Region{Name: row[0], WardID: ward.ID}).Error
-
-		if err != nil {
-			return err
-		}
-
-		for i, v := range row[1:] {
-			var garbageDay model.GarbageDay
-
-			weekday, weekNum, err := FindWeekday(v)
-
-			if err != nil {
-				return err
-			}
-
-			garbageType := func() model.GarbageType {
-				switch header[i] {
-
-				case "燃やすごみの収集曜日":
-					return model.Burnable
-
-				case "燃やさないごみの収集曜日":
-					return model.NonBurnable
-
-				case "資源物の収集曜日":
-					return model.Recyclable
-
-				default:
-					return 0
-				}
-			}()
-
-			err = db.FirstOrCreate(&garbageDay, model.GarbageDay{RegionID: region.ID, GarbageType: garbageType, DayOfWeek: weekday, WeekNumberOfMonth: weekNum}).Error
-
-			if err != nil {
-				return err
-			}
-		}
-	}
-	return nil
-}
-
-func FindWeekday(s string) (model.Weekday, int, error) {
+// 曜日を取得
+func getWeekDay(s string) (model.Weekday, int, error) {
 	for k, v := range model.WeekdayMap {
 		// 曜日を取得
 		if strings.Contains(s, v) {
@@ -84,4 +35,67 @@ func FindWeekday(s string) (model.Weekday, int, error) {
 		}
 	}
 	return 0, 0, fmt.Errorf("invalid: %s", s)
+}
+
+// GarbageTypeを取得
+func getGarbageType(s string) model.GarbageType {
+
+	switch s {
+	case "燃やすごみの収集曜日":
+		return model.Burnable
+	case "燃やさないごみの収集曜日":
+		return model.NonBurnable
+	case "資源物の収集曜日":
+		return model.Recyclable
+	default:
+		return 0
+	}
+}
+
+func ImportSumidakuCSV(db *gorm.DB, ward model.Ward, records [][]string) error {
+
+	startTime := time.Now()
+
+	header := records[0][1:]
+
+	rows := records[1:]
+
+	var garbageDays []model.GarbageDay
+
+	for _, row := range rows {
+
+		var region model.Region
+
+		err := db.FirstOrCreate(&region, model.Region{Name: row[0], WardID: ward.ID}).Error
+
+		if err != nil {
+			return err
+		}
+
+		for i, v := range row[1:] {
+
+			weekday, weekNum, err := getWeekDay(v)
+
+			if err != nil {
+				return err
+			}
+
+			garbageType := getGarbageType(header[i])
+
+			garbageDays = append(garbageDays, model.GarbageDay{Region: region, GarbageType: garbageType, DayOfWeek: weekday, WeekNumberOfMonth: weekNum})
+		}
+	}
+
+	// BULK INSERT
+	err := db.Create(garbageDays).Error
+
+	if err != nil {
+		return err
+	}
+
+	elapsedTime := time.Since(startTime)
+
+	fmt.Printf("INFO: 墨田区インポートにかかった時間: %s\n", elapsedTime)
+
+	return nil
 }
