@@ -19,7 +19,11 @@ func ImportSumidakuCSV(db *gorm.DB, ward model.Ward, records [][]string) error {
 
 		var region model.Region
 
-		db.FirstOrCreate(&region, model.Region{Name: row[0], WardID: ward.ID})
+		err := db.FirstOrCreate(&region, model.Region{Name: row[0], WardID: ward.ID}).Error
+
+		if err != nil {
+			return err
+		}
 
 		for i, v := range row[1:] {
 			var garbageDay model.GarbageDay
@@ -47,7 +51,11 @@ func ImportSumidakuCSV(db *gorm.DB, ward model.Ward, records [][]string) error {
 				}
 			}()
 
-			db.FirstOrCreate(&garbageDay, model.GarbageDay{RegionID: region.ID, GarbageType: garbageType, DayOfWeek: weekday, WeekNumberOfMonth: weekNum})
+			err = db.FirstOrCreate(&garbageDay, model.GarbageDay{RegionID: region.ID, GarbageType: garbageType, DayOfWeek: weekday, WeekNumberOfMonth: weekNum}).Error
+
+			if err != nil {
+				return err
+			}
 		}
 	}
 	return nil
