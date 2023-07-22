@@ -48,6 +48,34 @@ func getGarbageType(s string) model.GarbageType {
 	return v
 }
 
+func parseRegion(s string) (string, *int, error) {
+	re := regexp.MustCompile(`(.*?)([0-9０-９一二三四五六七八九十]*)丁目?`)
+	match := re.FindStringSubmatch(s)
+
+	if len(match) < 2 {
+		return s, nil, nil
+	}
+
+	name := match[1]
+
+	var blockNumber *int
+
+	if len(match) > 2 && match[2] != "" {
+		numStr := match[2]
+		var num int
+		var err error
+
+		num, err = strconv.Atoi(numStr) // アラビア数字を数値に変換
+		if err != nil {
+			return "", nil, err
+		}
+
+		blockNumber = &num
+	}
+
+	return name, blockNumber, nil
+}
+
 // Header: [索引 町丁名 資源 燃やすごみ 燃やさないごみ]
 // Row: [あ 秋葉原 水曜 月曜・木曜 その月の1回目・3回目の土曜日]
 
@@ -69,7 +97,13 @@ func ImportTaitokuCSV(db *gorm.DB, ward model.Ward, records [][]string) error { 
 
 		// 各要素をRegionに変換
 		for _, name := range names {
-			regions = append(regions, model.Region{Name: name, WardID: ward.ID})
+
+			name, blockNumber, err := parseRegion(name)
+
+			if err != nil {
+				return err
+			}
+			regions = append(regions, model.Region{Name: name, BlockNumber: blockNumber, WardID: ward.ID})
 		}
 
 		// INSERT REGION

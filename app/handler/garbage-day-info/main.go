@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"os"
 	"regexp"
-	"strings"
+	"strconv"
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
@@ -13,6 +13,8 @@ import (
 	"github.com/devshun/tokyo23ku-gomiinfo-bot/infrastructure/mysql"
 	"github.com/devshun/tokyo23ku-gomiinfo-bot/usecase"
 	"github.com/line/line-bot-sdk-go/v7/linebot"
+	"golang.org/x/text/width"
+	_ "golang.org/x/text/width"
 )
 
 type RequestBody struct {
@@ -51,32 +53,39 @@ func postLineMessage(userid string, message string) error {
 	return nil
 }
 
-func getAreaStr(address string) (string, string) {
-	parts := strings.Split(address, " ")
-	addressParts := strings.Split(parts[1], " ")
-	a := addressParts[0]
+func getAreaStr(address string) (string, string, int) {
 
-	// NOTE: とりあえず、○丁目の部分は削除とする
-	pattern := `(?P<ward>[^都]+区)(?P<region>[^\d]*[^０-９]*)丁目`
-	re := regexp.MustCompile(pattern)
-	matches := re.FindStringSubmatch(a)
+	r, _ := regexp.Compile("東京都(.*?)区(.*?)([０-９]+)")
 
-	paramsMap := make(map[string]string)
+	match := r.FindStringSubmatch(address)
 
-	for i, name := range re.SubexpNames() {
-		if i > 0 && i <= len(matches) {
-			paramsMap[name] = matches[i]
-		}
+	var name string
+	var region string
+	var blockNumber int
+
+	if len(match) > 0 {
+		name = match[1] + "区"
 	}
 
-	patternDigits := `[０-９]+$`
-	reDigits := regexp.MustCompile(patternDigits)
-	region := reDigits.ReplaceAllString(paramsMap["region"], "")
+	if len(match) > 1 {
+		region = match[2]
+	}
 
-	fmt.Println("ward: ", paramsMap["ward"])
-	fmt.Println("region: ", region)
+	if len(match) > 2 {
 
-	return paramsMap["ward"], region
+		// 全角->半角に変換
+		s := width.Fold.String(match[3])
+
+		i, err := strconv.Atoi(s)
+
+		if err != nil {
+			fmt.Println(err)
+		}
+
+		blockNumber = i
+	}
+
+	return name, region, blockNumber
 }
 
 func handleRequest(req events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
@@ -109,9 +118,9 @@ func handleRequest(req events.APIGatewayProxyRequest) (events.APIGatewayProxyRes
 
 	if r.Message.Type == "location" {
 
-		ward, region := getAreaStr(r.Message.Address)
+		ward, region, blockNumber := getAreaStr(r.Message.Address)
 
-		garbageDayInfo, err := gu.GetByAreaNames(ward, region)
+		garbageDayInfo, err := gu.GetByAreaNames(ward, region, blockNumber)
 
 		if err != nil {
 			return events.APIGatewayProxyResponse{

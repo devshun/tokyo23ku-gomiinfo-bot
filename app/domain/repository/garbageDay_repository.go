@@ -5,5 +5,5 @@ import (
 )
 
 type GarbageDayRepository interface {
-	GetByAreaNames(wardName string, regionName string) ([]model.GarbageDay, error)
+	GetByAreaNames(wardName string, regionName string, blockNumber int) ([]model.GarbageDay, error)
 }

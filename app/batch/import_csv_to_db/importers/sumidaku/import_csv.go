@@ -26,6 +26,56 @@ var garbageTypeLabelMap = map[string]model.GarbageType{
 	"資源物の収集曜日":     model.Recyclable,
 }
 
+var kanjiNumberMap = map[string]int{
+	"一": 1,
+	"二": 2,
+	"三": 3,
+	"四": 4,
+	"五": 5,
+	"六": 6,
+	"七": 7,
+	"八": 8,
+	"九": 9,
+	"十": 10,
+}
+
+func kanjiToNumber(kanji string) (int, error) {
+	if num, ok := kanjiNumberMap[kanji]; ok {
+		return num, nil
+	}
+	return 0, fmt.Errorf("invalid kanji number: %s", kanji)
+}
+
+func parseRegion(s string) (string, *int, error) {
+	re := regexp.MustCompile(`(.*?)([0-9０-９一二三四五六七八九十]*)丁目?`)
+	match := re.FindStringSubmatch(s)
+	if len(match) < 2 {
+		return s, nil, nil
+	}
+
+	name := match[1]
+	var blockNumber *int
+	if len(match) > 2 && match[2] != "" {
+		numStr := match[2]
+		var num int
+		var err error
+		if strings.Contains("一二三四五六七八九十", numStr) {
+			num, err = kanjiToNumber(numStr) // 漢数字を数値に変換
+			if err != nil {
+				return "", nil, err
+			}
+		} else {
+			num, err = strconv.Atoi(numStr) // アラビア数字を数値に変換
+			if err != nil {
+				return "", nil, err
+			}
+		}
+		blockNumber = &num
+	}
+
+	return name, blockNumber, nil
+}
+
 // Weekdayを取得
 func getWeekday(s string) (model.Weekday, int, error) {
 	for k, v := range weekdayLabelMap {
@@ -80,8 +130,14 @@ func ImportSumidakuCSV(db *gorm.DB, ward model.Ward, records [][]string) error {
 
 		var region model.Region
 
+		name, blockNumber, err := parseRegion(row[0])
+
+		if err != nil {
+			return err
+		}
+
 		// INSERT REGION
-		err := db.FirstOrCreate(&region, model.Region{Name: row[0], WardID: ward.ID}).Error
+		err = db.FirstOrCreate(&region, model.Region{Name: name, BlockNumber: blockNumber, WardID: ward.ID}).Error
 
 		if err != nil {
 			return err

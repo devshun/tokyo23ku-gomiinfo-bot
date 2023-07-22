@@ -14,14 +14,14 @@ func NewGarbageDayRepository(db *gorm.DB) repository.GarbageDayRepository {
 	return &garbageDayRepository{DB: db}
 }
 
-func (gr *garbageDayRepository) GetByAreaNames(wardName string, regionName string) ([]model.GarbageDay, error) {
-
+func (gr *garbageDayRepository) GetByAreaNames(ward string, region string, blockNumber int) ([]model.GarbageDay, error) {
 	var garbageDays []model.GarbageDay
 
 	err := gr.DB.Preload("Region").Preload("Region.Ward").
 		Joins("JOIN regions ON garbage_days.region_id = regions.id").
 		Joins("JOIN wards ON regions.ward_id = wards.id").
-		Where("wards.name = ? AND regions.name = ?", wardName, regionName).
+		// NOTE: ~ 丁目まで一致するレコード or 地域まで一致するレコードを取得
+		Where("(wards.name = ? AND regions.name = ? AND regions.block_number = ?) OR (wards.name = ? AND regions.name = ? AND regions.block_number IS NULL)", ward, region, blockNumber, ward, region).
 		Order("garbage_days.garbage_type, garbage_days.day_of_week, garbage_days.week_number_of_month").
 		Find(&garbageDays).Error
 
