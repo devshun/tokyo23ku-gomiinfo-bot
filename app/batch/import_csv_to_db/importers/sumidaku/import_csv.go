@@ -1,21 +1,36 @@
-package importers
+package sumidaku
 
 import (
 	"fmt"
 	"regexp"
 	"strconv"
 	"strings"
-	"time"
 
 	"github.com/devshun/tokyo23ku-gomiinfo-bot/domain/model"
 	"gorm.io/gorm"
 )
 
-// 曜日を取得
-func getWeekDay(s string) (model.Weekday, int, error) {
-	for k, v := range model.WeekdayMap {
+var weekdayLabelMap = map[string]model.Weekday{
+	"月曜日": model.Monday,
+	"火曜日": model.Tuesday,
+	"水曜日": model.Wednesday,
+	"木曜日": model.Thursday,
+	"金曜日": model.Friday,
+	"土曜日": model.Saturday,
+	"日曜日": model.Sunday,
+}
+
+var garbageTypeLabelMap = map[string]model.GarbageType{
+	"燃やすごみの収集曜日":   model.Burnable,
+	"燃やさないごみの収集曜日": model.NonBurnable,
+	"資源物の収集曜日":     model.Recyclable,
+}
+
+// Weekdayを取得
+func getWeekday(s string) (model.Weekday, int, error) {
+	for k, v := range weekdayLabelMap {
 		// 曜日を取得
-		if strings.Contains(s, v) {
+		if strings.Contains(s, k) {
 			// 第何週目かを取得
 			re := regexp.MustCompile(`第(\d)`)
 
@@ -28,10 +43,10 @@ func getWeekDay(s string) (model.Weekday, int, error) {
 					return 0, 0, err
 				}
 
-				return model.Weekday(k), weekNum, nil
+				return v, weekNum, nil
 			}
 
-			return model.Weekday(k), 0, nil
+			return v, 0, nil
 		}
 	}
 	return 0, 0, fmt.Errorf("invalid: %s", s)
@@ -40,21 +55,16 @@ func getWeekDay(s string) (model.Weekday, int, error) {
 // GarbageTypeを取得
 func getGarbageType(s string) model.GarbageType {
 
-	switch s {
-	case "燃やすごみの収集曜日":
-		return model.Burnable
-	case "燃やさないごみの収集曜日":
-		return model.NonBurnable
-	case "資源物の収集曜日":
-		return model.Recyclable
-	default:
+	v, ok := garbageTypeLabelMap[s]
+
+	if !ok {
 		return 0
 	}
+
+	return v
 }
 
 func ImportSumidakuCSV(db *gorm.DB, ward model.Ward, records [][]string) error {
-
-	startTime := time.Now()
 
 	header := records[0][1:]
 
@@ -66,6 +76,7 @@ func ImportSumidakuCSV(db *gorm.DB, ward model.Ward, records [][]string) error {
 
 		var region model.Region
 
+		// INSERT REGION
 		err := db.FirstOrCreate(&region, model.Region{Name: row[0], WardID: ward.ID}).Error
 
 		if err != nil {
@@ -74,7 +85,7 @@ func ImportSumidakuCSV(db *gorm.DB, ward model.Ward, records [][]string) error {
 
 		for i, v := range row[1:] {
 
-			weekday, weekNum, err := getWeekDay(v)
+			weekday, weekNum, err := getWeekday(v)
 
 			if err != nil {
 				return err
@@ -86,16 +97,12 @@ func ImportSumidakuCSV(db *gorm.DB, ward model.Ward, records [][]string) error {
 		}
 	}
 
-	// BULK INSERT
+	// BULK INSERT GARBAGE_DAYS
 	err := db.Create(garbageDays).Error
 
 	if err != nil {
 		return err
 	}
-
-	elapsedTime := time.Since(startTime)
-
-	fmt.Printf("INFO: 墨田区インポートにかかった時間: %s\n", elapsedTime)
 
 	return nil
 }
