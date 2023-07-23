@@ -47,18 +47,18 @@ func kanjiToNumber(kanji string) (int, error) {
 	return 0, fmt.Errorf("invalid kanji number: %s", kanji)
 }
 
-func parseRegion(s string) (string, *int, error) {
+func parseRegion(s string) (string, int, error) {
 	re := regexp.MustCompile(`(.*?)([一二三四五六七八九十]*)丁目?`)
 
 	match := re.FindStringSubmatch(s)
 
 	if len(match) < 2 {
-		return s, nil, nil
+		return s, 0, nil
 	}
 
 	name := match[1]
 
-	var blockNumber *int
+	var blockNumber int
 
 	if len(match) > 2 {
 		numStr := match[2]
@@ -68,10 +68,10 @@ func parseRegion(s string) (string, *int, error) {
 		n, err := kanjiToNumber(numStr) // 漢数字を数値に変換
 
 		if err != nil {
-			return "", nil, err
+			return "", 0, err
 		}
 
-		blockNumber = &n
+		blockNumber = n
 	}
 
 	return name, blockNumber, nil

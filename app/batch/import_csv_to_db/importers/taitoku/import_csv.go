@@ -48,17 +48,17 @@ func getGarbageType(s string) model.GarbageType {
 	return v
 }
 
-func parseRegion(s string) (string, *int, error) {
+func parseRegion(s string) (string, int, error) {
 	re := regexp.MustCompile(`(.*?)([0-9０-９一二三四五六七八九十]*)丁目?`)
 	match := re.FindStringSubmatch(s)
 
 	if len(match) < 2 {
-		return s, nil, nil
+		return s, 0, nil
 	}
 
 	name := match[1]
 
-	var blockNumber *int
+	var blockNumber int
 
 	if len(match) > 2 && match[2] != "" {
 		numStr := match[2]
@@ -67,10 +67,10 @@ func parseRegion(s string) (string, *int, error) {
 
 		num, err = strconv.Atoi(numStr) // アラビア数字を数値に変換
 		if err != nil {
-			return "", nil, err
+			return "", 0, err
 		}
 
-		blockNumber = &num
+		blockNumber = num
 	}
 
 	return name, blockNumber, nil
