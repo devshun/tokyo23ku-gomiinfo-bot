@@ -21,7 +21,8 @@ func (gr *garbageDayRepository) GetByAreaInfo(ward string, region string, blockN
 		Joins("JOIN regions ON garbage_days.region_id = regions.id").
 		Joins("JOIN wards ON regions.ward_id = wards.id").
 		// NOTE: ~ 丁目まで一致するレコード or 地域まで一致するレコードを取得
-		Where("(wards.name = ? AND regions.name = ? AND regions.block_number = ?) OR (wards.name = ? AND regions.name = ? AND regions.block_number IS NULL)", ward, region, blockNumber, ward, region).
+		// TODO: 丁目まで一致するレコードの方が優先度が高いので、丁目まで一致するレコードを先に取得するようにする
+		Where("(wards.name = ? AND regions.name = ? AND regions.block_number = ?) OR (wards.name = ? AND regions.name = ? AND regions.block_number = 0)", ward, region, blockNumber, ward, region).
 		Order("garbage_days.garbage_type, garbage_days.day_of_week, garbage_days.week_number_of_month").
 		Find(&garbageDays).Error
 
