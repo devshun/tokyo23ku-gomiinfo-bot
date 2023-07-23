@@ -43,34 +43,35 @@ func kanjiToNumber(kanji string) (int, error) {
 	if num, ok := kanjiNumberMap[kanji]; ok {
 		return num, nil
 	}
+
 	return 0, fmt.Errorf("invalid kanji number: %s", kanji)
 }
 
 func parseRegion(s string) (string, *int, error) {
-	re := regexp.MustCompile(`(.*?)([0-9０-９一二三四五六七八九十]*)丁目?`)
+	re := regexp.MustCompile(`(.*?)([一二三四五六七八九十]*)丁目?`)
+
 	match := re.FindStringSubmatch(s)
+
 	if len(match) < 2 {
 		return s, nil, nil
 	}
 
 	name := match[1]
+
 	var blockNumber *int
-	if len(match) > 2 && match[2] != "" {
+
+	if len(match) > 2 {
 		numStr := match[2]
-		var num int
+
 		var err error
-		if strings.Contains("一二三四五六七八九十", numStr) {
-			num, err = kanjiToNumber(numStr) // 漢数字を数値に変換
-			if err != nil {
-				return "", nil, err
-			}
-		} else {
-			num, err = strconv.Atoi(numStr) // アラビア数字を数値に変換
-			if err != nil {
-				return "", nil, err
-			}
+
+		n, err := kanjiToNumber(numStr) // 漢数字を数値に変換
+
+		if err != nil {
+			return "", nil, err
 		}
-		blockNumber = &num
+
+		blockNumber = &n
 	}
 
 	return name, blockNumber, nil

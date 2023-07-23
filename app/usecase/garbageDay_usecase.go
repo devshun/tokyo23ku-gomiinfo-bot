@@ -24,8 +24,8 @@ func NewGarbageDayUsecase(garbageDayRepository repository.GarbageDayRepository) 
 	}
 }
 
-func (gu *garbageDayUsecase) GetByAreaNames(wardName string, regionName string, blockNumber int) (GarbageDayInfo, error) {
-	garbageDays, err := gu.garbageDayRepo.GetByAreaNames(wardName, regionName, blockNumber)
+func (gu *garbageDayUsecase) GetByAreaInfo(wardName string, regionName string, blockNumber int) (GarbageDayInfo, error) {
+	garbageDays, err := gu.garbageDayRepo.GetByAreaInfo(wardName, regionName, blockNumber)
 
 	if err != nil {
 		return GarbageDayInfo{}, err

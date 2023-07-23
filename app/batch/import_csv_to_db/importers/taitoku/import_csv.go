@@ -180,6 +180,7 @@ func ImportTaitokuCSV(db *gorm.DB, ward model.Ward, records [][]string) error { 
 		}
 	}
 
+	// gormのCreateメソッドにスライスを渡してBulkInsert
 	err := db.Create(&garbageDays).Error
 
 	if err != nil {

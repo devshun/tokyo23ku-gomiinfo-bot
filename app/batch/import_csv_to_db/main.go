@@ -40,6 +40,8 @@ func importCSVToDB() error {
 
 	fmt.Println("INFO: ゴミ情報のインポートを開始します")
 
+	eStartTime := time.Now()
+
 	db, err := db.Init()
 
 	if err != nil {
@@ -100,6 +102,10 @@ func importCSVToDB() error {
 	}
 
 	wg.Wait()
+
+	eElapsedTime := time.Since(eStartTime)
+
+	fmt.Println("INFO: 全体のインポートにかかった時間", eElapsedTime)
 
 	fmt.Println("INFO: ゴミ情報のインポートを終了します")
 

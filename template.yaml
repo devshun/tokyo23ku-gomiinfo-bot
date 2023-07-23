@@ -88,7 +88,7 @@ Resources:
           Type: Schedule
           Properties:
             # 日本時間 0時に実行
-            Schedule: rate(2 hours)
+            Schedule: rate(1 day)
 Outputs:
   ApiGatewayUrl:
     Description: "API Gateway URL"

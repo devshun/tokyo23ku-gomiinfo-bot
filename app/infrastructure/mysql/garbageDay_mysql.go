@@ -14,7 +14,7 @@ func NewGarbageDayRepository(db *gorm.DB) repository.GarbageDayRepository {
 	return &garbageDayRepository{DB: db}
 }
 
-func (gr *garbageDayRepository) GetByAreaNames(ward string, region string, blockNumber int) ([]model.GarbageDay, error) {
+func (gr *garbageDayRepository) GetByAreaInfo(ward string, region string, blockNumber int) ([]model.GarbageDay, error) {
 	var garbageDays []model.GarbageDay
 
 	err := gr.DB.Preload("Region").Preload("Region.Ward").

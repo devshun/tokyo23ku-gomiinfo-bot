@@ -17,6 +17,7 @@ import (
 	_ "golang.org/x/text/width"
 )
 
+// Massaging api request body
 type RequestBody struct {
 	Events []struct {
 		ReplyToken string `json:"replyToken,omitempty"`
@@ -37,14 +38,14 @@ type RequestBody struct {
 	} `json:"events,omitempty"`
 }
 
-func postLineMessage(userid string, message string) error {
+func postLineMessage(userId string, message string) error {
 	bot, err := linebot.New(os.Getenv("CHANNEL_SECRET"), os.Getenv("CHANNEL_TOKEN"))
 
 	if err != nil {
 		return err
 	}
 
-	_, err = bot.PushMessage(userid, linebot.NewTextMessage(message)).Do()
+	_, err = bot.PushMessage(userId, linebot.NewTextMessage(message)).Do()
 
 	if err != nil {
 		return err
@@ -53,6 +54,8 @@ func postLineMessage(userid string, message string) error {
 	return nil
 }
 
+// NOTE: 以下のような文字列から区、地域、丁目を取得する
+// 日本、〒130-0021 東京都〇〇区〇〇丁目1−1 〇〇
 func getAreaStr(address string) (string, string, int) {
 
 	r, _ := regexp.Compile("東京都(.*?)区(.*?)([０-９]+)")
@@ -120,7 +123,7 @@ func handleRequest(req events.APIGatewayProxyRequest) (events.APIGatewayProxyRes
 
 		ward, region, blockNumber := getAreaStr(r.Message.Address)
 
-		garbageDayInfo, err := gu.GetByAreaNames(ward, region, blockNumber)
+		garbageDayInfo, err := gu.GetByAreaInfo(ward, region, blockNumber)
 
 		if err != nil {
 			return events.APIGatewayProxyResponse{
